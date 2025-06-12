@@ -2406,3 +2406,12 @@ fn test_clear() {
     assert!(context.get_value("five").is_none());
     assert!(eval_with_context("abc(5)", &context).is_err());
 }
+
+#[test]
+fn test_math_constants_context() {
+    let ctx = math_consts_context!();
+    assert_eq!(
+        eval_with_context("math::sin(PI / 2)", &ctx),
+        Ok(Value::Float(1.0))
+    );
+}
