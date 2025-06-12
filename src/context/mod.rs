@@ -237,7 +237,7 @@ impl Context for HashMapContext {
 
     fn call_function(&self, identifier: &str, argument: &Value) -> EvalexprResult<Value> {
         if let Some(function) = self.functions.get(identifier) {
-            function.call(argument)
+            function.call(argument, self)
         } else {
             Err(EvalexprError::FunctionIdentifierNotFound(
                 identifier.to_string(),

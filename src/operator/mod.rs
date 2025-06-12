@@ -448,6 +448,8 @@ impl Operator {
 
                 if let Some(value) = context.get_value(identifier).cloned() {
                     Ok(value)
+                } else if let Some(value) = crate::global_context::get_value_copy(identifier) {
+                    Ok(value)
                 } else {
                     Err(EvalexprError::VariableIdentifierNotFound(
                         identifier.clone(),
@@ -459,17 +461,25 @@ impl Operator {
                 let arguments = &arguments[0];
 
                 match context.call_function(identifier, arguments) {
-                    Err(EvalexprError::FunctionIdentifierNotFound(_))
-                        if !context.are_builtin_functions_disabled() =>
-                    {
-                        if let Some(builtin_function) = builtin_function(identifier) {
-                            builtin_function.call(arguments)
+                    Err(EvalexprError::FunctionIdentifierNotFound(_)) => {
+                        if let Some(value) =
+                            crate::global_context::call_function_copy(identifier, arguments)?
+                        {
+                            Ok(value)
+                        } else if !context.are_builtin_functions_disabled() {
+                            if let Some(builtin_function) = builtin_function(identifier) {
+                                builtin_function.call(arguments, context)
+                            } else {
+                                Err(EvalexprError::FunctionIdentifierNotFound(
+                                    identifier.clone(),
+                                ))
+                            }
                         } else {
                             Err(EvalexprError::FunctionIdentifierNotFound(
                                 identifier.clone(),
                             ))
                         }
-                    },
+                    }
                     result => result,
                 }
             },
