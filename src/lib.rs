@@ -594,6 +594,7 @@ pub use crate::{
     operator::Operator,
     token::PartialToken,
     tree::Node,
+    global_context,
     value::{value_type::ValueType, EmptyType, FloatType, IntType, TupleType, Value, EMPTY_VALUE},
 };
 
@@ -607,5 +608,6 @@ mod operator;
 mod token;
 mod tree;
 mod value;
+pub mod global_context;
 
 // Exports

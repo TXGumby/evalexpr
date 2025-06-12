@@ -1,5 +1,7 @@
 use std::fmt;
 
+use crate::context::Context;
+
 use crate::{error::EvalexprResult, value::Value};
 
 pub(crate) mod builtin;
@@ -7,7 +9,7 @@ pub(crate) mod builtin;
 /// A helper trait to enable cloning through `Fn` trait objects.
 trait ClonableFn
 where
-    Self: Fn(&Value) -> EvalexprResult<Value>,
+    Self: Fn(&Value, &dyn Context) -> EvalexprResult<Value>,
     Self: Send + Sync + 'static,
 {
     fn dyn_clone(&self) -> Box<dyn ClonableFn>;
@@ -15,7 +17,7 @@ where
 
 impl<F> ClonableFn for F
 where
-    F: Fn(&Value) -> EvalexprResult<Value>,
+    F: Fn(&Value, &dyn Context) -> EvalexprResult<Value>,
     F: Send + Sync + 'static,
     F: Clone,
 {
@@ -61,12 +63,24 @@ impl Function {
         F: Clone,
     {
         Self {
+            function: Box::new(move |value, _context: &dyn Context| function(value)) as _,
+        }
+    }
+
+    /// Creates a user-defined function that has access to the context it is stored in.
+    pub fn new_with_context<F>(function: F) -> Self
+    where
+        F: Fn(&Value, &dyn Context) -> EvalexprResult<Value>,
+        F: Send + Sync + 'static,
+        F: Clone,
+    {
+        Self {
             function: Box::new(function) as _,
         }
     }
 
-    pub(crate) fn call(&self, argument: &Value) -> EvalexprResult<Value> {
-        (self.function)(argument)
+    pub(crate) fn call(&self, argument: &Value, context: &dyn Context) -> EvalexprResult<Value> {
+        (self.function)(argument, context)
     }
 }
 

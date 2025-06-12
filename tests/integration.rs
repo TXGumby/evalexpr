@@ -2415,3 +2415,24 @@ fn test_math_constants_context() {
         Ok(Value::Float(1.0))
     );
 }
+
+#[test]
+fn test_global_context_usage() {
+    global_context::clear();
+    global_context::set_value("g".into(), Value::Int(5)).unwrap();
+    global_context::set_function(
+        "add_g".into(),
+        Function::new_with_context(|arg, ctx| {
+            let base = ctx.get_value("g").unwrap().as_int()?;
+            Ok(Value::Int(arg.as_int()? + base))
+        }),
+    )
+    .unwrap();
+
+    assert_eq!(eval("add_g(3)"), Ok(Value::Int(8)));
+
+    let mut ctx = HashMapContext::new();
+    ctx.set_value("g".into(), Value::Int(1)).unwrap();
+    // Function still uses global value
+    assert_eq!(eval_with_context("add_g(2)", &ctx), Ok(Value::Int(7)));
+}
